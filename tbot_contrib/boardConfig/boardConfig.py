@@ -9,10 +9,10 @@ class MyBoard(
     name = "myboard"
 
     def poweron(self):
-        self.host.exec0("perl", "/opt/fhem/fhem.pl", "192.168.178.35:7072", "set V12_V24 on")
+        self.host.exec0("perl", "/opt/fhem/fhem.pl", "192.168.178.53:7072", "set ESCAPECOM on")
 
     def poweroff(self):
-        self.host.exec0("perl", "/opt/fhem/fhem.pl", "192.168.178.35:7072", "set V12_V24 off")
+        self.host.exec0("perl", "/opt/fhem/fhem.pl", "192.168.178.53:7072", "set ESCAPECOM off")
 
     def connect(self, mach):
         # Open the serial console
