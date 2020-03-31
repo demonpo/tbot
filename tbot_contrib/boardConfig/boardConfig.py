@@ -36,7 +36,7 @@ class LinuxFromUBoot(
 ):
     # Configuration for LinuxUbootConnector
     uboot = MyUBoot  # <- Our UBoot machine
-
+    
     def do_boot(self, ub):  # <- Procedure to boot Linux
        return ub.boot("run", "dani")
 
