@@ -2,17 +2,19 @@ from tbot.machine import board, linux, connector
 
 
 class MyBoard(
-    connector.ConsoleConnector,
-    board.PowerControl,
-    board.Board,
+    connector.ConsoleConnector, board.PowerControl, board.Board,
 ):
     name = "myboard"
 
     def poweron(self):
-        self.host.exec0("perl", "/opt/fhem/fhem.pl", "192.168.178.53:7072", "set ESCAPECOM on")
+        self.host.exec0(
+            "perl", "/opt/fhem/fhem.pl", "192.168.178.57:7072", "set ESCAPECOM on"
+        )
 
     def poweroff(self):
-        self.host.exec0("perl", "/opt/fhem/fhem.pl", "192.168.178.53:7072", "set ESCAPECOM off")
+        self.host.exec0(
+            "perl", "/opt/fhem/fhem.pl", "192.168.178.57:7072", "set ESCAPECOM off"
+        )
 
     def connect(self, mach):
         # Open the serial console
@@ -23,26 +25,25 @@ class MyBoard(
 
 
 class MyUBoot(
-    board.Connector,
-    board.UBootAutobootIntercept,
-    board.UBootShell,
+    board.Connector, board.UBootAutobootIntercept, board.UBootShell,
 ):
-    prompt ="Colibri iMX6 # "
+    prompt = "Colibri iMX6 # "
+
 
 class LinuxFromUBoot(
-    board.LinuxUbootConnector,
-    board.LinuxBootLogin,
-    linux.Bash,
+    board.LinuxUbootConnector, board.LinuxBootLogin, linux.Bash,
 ):
     # Configuration for LinuxUbootConnector
     uboot = MyUBoot  # <- Our UBoot machine
-    
+
     def do_boot(self, ub):  # <- Procedure to boot Linux
-       return ub.boot("run", "dani")
+        return ub.boot("run", "dani")
 
     # LinuxBootLogin handles waiting for Linux to boot & logging in
     username = "root"
     password = None
+
+
 BOARD = MyBoard
 UBOOT = MyUBoot
 LINUX = LinuxFromUBoot
