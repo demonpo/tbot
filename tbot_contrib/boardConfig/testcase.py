@@ -1,7 +1,5 @@
 import tbot
 
-
-import tbot
 from tbot.machine import linux
 
 
@@ -22,33 +20,28 @@ class Gpio:
 
     def _is_in_direction(self) -> bool:
         return self._direction == "in"
-    
-    def _is_active_low_off(self):
+
+    def _is_active_low_off(self) -> bool:
         return self._active_low == "0"
 
     def set_direction(self, direction: str) -> None:
         assert direction in ["in", "out"], f"Unsupported GPIO direction: {direction!r}"
         if self._direction == direction:
             return
-            
+
         (self._gpio_path / "direction").write_text(direction)
         self._direction = direction
 
     def set_active_low(self, value: bool) -> None:
-        if(value == True):
+        if value:
             (self._gpio_path / "active_low").write_text("1")
-            self._active_low="1"
+            self._active_low = "1"
         else:
             (self._gpio_path / "active_low").write_text("0")
-            self._active_low="0"
-         
+            self._active_low = "0"
 
-        
-
-
-    def get_active_low(self):
+    def get_active_low(self) -> str:
         return (self._gpio_path / "active_low").read_text().strip()
-
 
     def get_direction(self) -> str:
         return (self._gpio_path / "direction").read_text().strip()
@@ -57,19 +50,19 @@ class Gpio:
         if self._is_in_direction():
             raise Exception("Can't set a GPIO which is not an output")
         else:
-            if(value == True):
-                if (self._is_active_low_off()):
+            if value:
+                if self._is_active_low_off():
                     (self._gpio_path / "value").write_text("1")
-        
+
                 else:
                     (self._gpio_path / "value").write_text("0")
-            
+
             else:
-                if (self._is_active_low_off()):
+                if self._is_active_low_off():
                     (self._gpio_path / "value").write_text("0")
                 else:
                     (self._gpio_path / "value").write_text("1")
-          
+
     def get_value(self) -> str:
         if self._is_in_direction():
             return (self._gpio_path / "value").read_text().strip()
@@ -77,17 +70,15 @@ class Gpio:
             raise Exception("Can't get a value from a GPIO which is not an input")
 
 
-
 @tbot.testcase
-def testcase_prueba():
+def testcase_prueba() -> None:
     with tbot.acquire_lab() as lb:
         lb.exec0("whoami")
         with tbot.acquire_board(lb) as b:
             with tbot.acquire_linux(b) as lx:
-                gpio25 = Gpio(lx,25)
+                gpio25 = Gpio(lx, 25)
                 tbot.log.message(gpio25.get_direction())
                 gpio25.set_direction("out")
                 tbot.log.message(gpio25.get_direction())
                 gpio25.set_value(True)
-                #tbot.log.message(gpio25.get_value())
-                
+                # tbot.log.message(gpio25.get_value())

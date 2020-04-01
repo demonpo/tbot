@@ -1,4 +1,3 @@
-import tbot
 from tbot.machine import linux
 
 
@@ -6,51 +5,64 @@ class Gpio:
     def __init__(self, host: linux.LinuxShell, gpio_number: int):
 
         self.host = host
-        self._gpio_number = str(gpio_number)
+        self.gpio_number = gpio_number
         self._gpio_sysclass_path = self.host.fsroot / "sys/class/gpio"
-        self._gpio_path = self._gpio_sysclass_path / f"gpio{self._gpio_number}"
+        self._gpio_path = self._gpio_sysclass_path / f"gpio{self.gpio_number}"
         self._export()
+        self._direction = self.get_direction()
+        self._active_low = self.get_active_low()
 
     def _export(self) -> None:
         if not self._gpio_path.is_dir():
-            self.host.exec0(
-                "echo",
-                str(self._gpio_number),
-                linux.RedirStdout(self._gpio_sysclass_path / "export"),
-            )
+            (self._gpio_sysclass_path / "export").write_text(str(self.gpio_number))
 
     def _is_in_direction(self) -> bool:
-        direction = self.host.exec0("cat", self._gpio_path / "direction")
-        return direction.strip().lower() == "in"
+        return self._direction == "in"
 
-    def set_in_direction(self) -> None:
-        if self._is_in_direction():
-            pass
-        else:
-            self.host.exec0(
-                "echo", "in", linux.RedirStdout(self._gpio_path / "direction")
-            )
+    def _is_active_low_off(self) -> bool:
+        return self._active_low == "0"
 
-    def set_out_direction(self) -> None:
-        if not self._is_in_direction():
-            pass
+    def set_direction(self, direction: str) -> None:
+        assert direction in ["in", "out"], f"Unsupported GPIO direction: {direction!r}"
+        if self._direction == direction:
+            return
+
+        (self._gpio_path / "direction").write_text(direction)
+        self._direction = direction
+
+    def set_active_low(self, value: bool) -> None:
+        if value:
+            (self._gpio_path / "active_low").write_text("1")
+            self._active_low = "1"
         else:
-            self.host.exec0(
-                "echo", "out", linux.RedirStdout(self._gpio_path / "direction")
-            )
+            (self._gpio_path / "active_low").write_text("0")
+            self._active_low = "0"
+
+    def get_active_low(self) -> str:
+        return (self._gpio_path / "active_low").read_text().strip()
 
     def get_direction(self) -> str:
-        return self.host.exec0("cat", self._gpio_path / "direction").strip()
+        return (self._gpio_path / "direction").read_text().strip()
 
-    def set_value(self, value: str) -> None:
+    def set_value(self, value: bool) -> None:
         if self._is_in_direction():
-            tbot.log.message("You can not set value from a GPIO that has out direction")
+            raise Exception("Can't set a GPIO which is not an output")
         else:
-            self.host.exec0("echo", value, linux.Raw(">"), self._gpio_path / "value")
+            if value:
+                if self._is_active_low_off():
+                    (self._gpio_path / "value").write_text("1")
+
+                else:
+                    (self._gpio_path / "value").write_text("0")
+
+            else:
+                if self._is_active_low_off():
+                    (self._gpio_path / "value").write_text("0")
+                else:
+                    (self._gpio_path / "value").write_text("1")
 
     def get_value(self) -> str:
         if self._is_in_direction():
-            return self.host.exec0("cat", self._gpio_path / "value").strip()
+            return (self._gpio_path / "value").read_text().strip()
         else:
-            tbot.log.message("You can not get value from a GPIO that has in direction")
-            return ""
+            raise Exception("Can't get a value from a GPIO which is not an input")
