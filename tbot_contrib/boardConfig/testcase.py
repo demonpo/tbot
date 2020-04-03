@@ -12,17 +12,10 @@ class Gpio:
         self._gpio_path = self._gpio_sysclass_path / f"gpio{self.gpio_number}"
         self._export()
         self._direction = self.get_direction()
-        self._active_low = self.get_active_low()
 
     def _export(self) -> None:
         if not self._gpio_path.is_dir():
             (self._gpio_sysclass_path / "export").write_text(str(self.gpio_number))
-
-    def _is_in_direction(self) -> bool:
-        return self._direction == "in"
-
-    def _is_active_low_off(self) -> bool:
-        return not (self._active_low)
 
     def set_direction(self, direction: str) -> None:
         assert direction in ["in", "out"], f"Unsupported GPIO direction: {direction!r}"
@@ -33,53 +26,23 @@ class Gpio:
         self._direction = direction
 
     def set_active_low(self, value: bool) -> None:
-        if value:
-            (self._gpio_path / "active_low").write_text("1")
-            self._active_low = True
-        else:
-            (self._gpio_path / "active_low").write_text("0")
-            self._active_low = False
+        (self._gpio_path / "active_low").write_text("1" if value else "0")
 
     def get_active_low(self) -> bool:
-        if (self._gpio_path / "active_low").read_text().strip() == "0":
-            return False
-        else:
-            return True
+        return (self._gpio_path / "active_low").read_text().strip() != "0"
 
     def get_direction(self) -> str:
         return (self._gpio_path / "direction").read_text().strip()
 
     def set_value(self, value: bool) -> None:
-        if self._is_in_direction():
+        if self._direction == "in":
             raise Exception("Can't set a GPIO which is not an output")
-        else:
-            if value:
-                if self._is_active_low_off():
-                    (self._gpio_path / "value").write_text("1")
-
-                else:
-                    (self._gpio_path / "value").write_text("0")
-
-            else:
-                if self._is_active_low_off():
-                    (self._gpio_path / "value").write_text("0")
-                else:
-                    (self._gpio_path / "value").write_text("1")
+        (self._gpio_path / "value").write_text("1" if value else "0")
 
     def get_value(self) -> bool:
-        if self._is_in_direction():
-            if self._is_active_low_off():
-                if (self._gpio_path / "value").read_text().strip() == "0":
-                    return False
-                else:
-                    return True
-            else:
-                if (self._gpio_path / "value").read_text().strip() == "0":
-                    return True
-                else:
-                    return False
-        else:
+        if not (self._direction == "in"):
             raise Exception("Can't get a value from a GPIO which is not an input")
+        return (self._gpio_path / "value").read_text().strip() != "0"
 
 
 @tbot.testcase
