@@ -1,11 +1,28 @@
 import typing
+from tbot.machine import Machine
+from tbot.machine.board import UBootShell, LinuxBootLogin
 
 
 class Register:
-    def __init__(self, name: str, address: int, width: int):
+    def __init__(self, host: Machine, name: str, address: int, width: int):
         self.name = name
         self.address = address
+        assert width in [8, 16, 32, 64], f"Unsupported register width: {width!r}"
         self.width = width
+        if type(host) is UBootShell:
+            self.machine = "uboot"
+        elif type(host) is LinuxBootLogin:
+            self.machine = "linux"
+        else:
+            raise Exception(
+                f"You are not in allowed context (linux machine or uboot machine"
+            )
+
+    def getValue(self) -> None:
+        if self.machine == "uboot":
+            pass
+        elif self.machine == "linux":
+            pass
 
 
 class RegisterMap:
