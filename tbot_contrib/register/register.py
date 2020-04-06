@@ -22,6 +22,9 @@ class RegisterMap:
         return self.registers_dict.pop(name)
 
     def get_register(self, name: str) -> Register:
+        if name in self.registers_dict:
+            return self.registers_dict[name]
+
         return self.registers_dict[name]
 
     def get_all_registers(self) -> typing.List[Register]:
