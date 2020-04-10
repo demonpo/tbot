@@ -51,3 +51,6 @@ class RegisterMap:
 
     def get_all_registers(self) -> typing.List[Register]:
         return list(self.registers_dict.values())
+
+    def get_all_registers_values(self):
+        pass
